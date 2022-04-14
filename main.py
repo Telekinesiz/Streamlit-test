@@ -22,6 +22,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import plotly.express as px
 import time
 
+nltk.download('stopwords')
+
 #credentials*********************************************************
 reddit_credentials = praw.Reddit(
     user_agent=st.secrets['praw_user_agent'],
