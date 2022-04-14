@@ -24,10 +24,10 @@ import time
 
 #credentials*********************************************************
 reddit_credentials = praw.Reddit(
-    user_agent=st.secrets('praw_user_agent'),
-    client_id=st.secrets('praw_client_id'),
-    client_secret=st.secrets('praw_client_secret'),
-    username=st.secrets('praw_username'),
+    user_agent=st.secrets['praw_user_agent'],
+    client_id=st.secrets['praw_client_id'],
+    client_secret=st.secrets['praw_client_secret'],
+    username=st.secrets['praw_username'],
     )
 
 headers = {
