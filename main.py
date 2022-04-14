@@ -3,7 +3,6 @@ import praw
 import os
 from praw.models import MoreComments
 import pandas as pd
-from transformers import pipeline
 import nltk
 from langdetect import detect
 import numpy as np
@@ -104,89 +103,6 @@ def panda_clear_data(merged_df,column_for_classification):
     #lemmatize text
     merged_df[column_name] = merged_df[column_name].apply(lemmatize_text)
     return (merged_df)
-
-def sentiment_classifire(df, column_with_text):
-    classifier = pipeline('sentiment-analysis')
-    cloumn_with_label = column_with_text + ' label'
-    column_with_probability = 'Label probability'
-    column_index = 1 + int(df.columns.get_loc(column_with_text))
-    #df[column_with_text] = df[column_with_text].apply
-    df.insert(column_index, column_with_probability, 'none')
-    df.insert(column_index, cloumn_with_label, 'none')
-    limitizer_for_test = 0
-    for ind in df.index:
-        # setting limit for length of input text in order to avoid errors. this model has limit for input
-        stemmed_text = df[column_with_text][ind]
-        if len(stemmed_text) >= 212:
-            stemmed_text = stemmed_text[0:211]
-        else:
-            pass
-
-        input_text = ' '.join(str(x) for x in stemmed_text)
-        print("row number: " + str(limitizer_for_test))
-        print('text: ' + input_text)
-        print("length of sentence: " + str(len(input_text)))
-        result = classifier(input_text)
-        label_dictionary = result[0]
-        print(label_dictionary)
-        label = label_dictionary['label']
-        probability = label_dictionary['score']
-        df[cloumn_with_label][ind] = label
-        df[column_with_probability][ind] = probability
-        #print('Label: '+ label)
-
-        limitizer_for_test  += 1
-        #if limitizer_for_test  >= 20:
-        #    break
-    return (df)
-
-def topic_categorizer(df, column_with_text, candidate_labels):
-    classifier = pipeline('zero-shot-classification')
-    column_with_label = column_with_text + ' category'
-    column_with_probability = 'Category probability'
-    column_index = 1 + int(df.columns.get_loc(column_with_text))
-    #df[column_with_text] = df[column_with_text].apply(literal_eval)
-    df.insert(column_index, column_with_probability, 'none')
-    df.insert(column_index, column_with_label, 'none')
-    limitizer_for_test = 0
-    # setting limit for length of input text in order to avoid errors. this model has limit for input
-    for ind in df.index:
-
-        stemmed_text = df[column_with_text][ind]
-        if len(stemmed_text) >= 212:
-            stemmed_text = stemmed_text[0:211]
-        else:
-            pass
-
-        input_text = ' '.join(str(x) for x in stemmed_text)
-        print("row number: " + str(limitizer_for_test))
-        print('text: ' + input_text)
-        print("length of sentence: " + str(len(input_text)))
-        result = classifier(input_text, candidate_labels)
-
-        scores = result['scores']
-        labels = result['labels']
-
-        #finding largest score
-        largest_score = scores[0]
-        for number in scores:
-            if number > largest_score:
-                largest_score = number
-
-        #finding largest score index and label by undex
-        for index, score in enumerate(scores):
-            if score == largest_score:
-                lab_index = index
-
-        label = labels[lab_index]
-        df[column_with_label][ind] = label
-        df[column_with_probability][ind] = largest_score
-        #print('Label: '+ label)
-        limitizer_for_test  += 1
-        #if limitizer_for_test  >= 20:
-        #    break
-    return (df)
-
 
 # main script
 if __name__ == '__main__':
