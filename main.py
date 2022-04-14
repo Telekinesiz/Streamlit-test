@@ -259,7 +259,27 @@ if __name__ == '__main__':
     #graf_df_label = df.groupby(['Comment label'], sort=False).size().reset_index(name='Count')
     #graf_df_category = df.groupby(['Comment category'], sort=False).size().reset_index(name='Count')
     
-    
+     data_words = df[column_for_classification]
+    id2word = corpora.Dictionary(data_words)
+    corpus = []
+    for text in data_words:
+        new = id2word.doc2bow(text)
+        corpus.append(new)
+
+    lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
+                                                id2word=id2word,
+                                                num_topics=50,
+                                                random_state=100,
+                                                update_every=1,
+                                                chunksize=100,
+                                                passes=10,
+                                                alpha="auto")
+
+    #pyLDAvis.enable_notebook()
+
+    vis = pyLDAvis.gensim_models.prepare(lda_model, corpus, id2word, mds="mmds", R=30)
+    #vis
+    pyLDAvis.
     
 
     st.markdown("""***""")
@@ -269,5 +289,36 @@ if __name__ == '__main__':
     image = st.image(link_or_image_3)
     st.markdown(link_or_image_3)
     st.markdown(topic_text)
+
+    st.markdown("""***""")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Topic score", topic_score)
+    col2.metric("Score ratio", topic_ratio)
+    col3.metric("Topic price*", award_price)
+    st.markdown(
+        """(Topic price value counts as a summary of prices of all awards, given to the topic and comments in it.)""")
+
+
+    #st.markdown("""***""")
+    #st.header("Comments categories")
+    #st.plotly_chart(fig1)
+
+    #st.markdown("""***""")
+    #st.header("Comments labels")
+    #st.plotly_chart(fig2)
+
+    st.markdown("""***""")
+    st.subheader('Interactive comment visualization')
+    components.v1.html(html_string, width=1000, height=800, scrolling=False)
+
+
+    st.markdown("""***""")
+    st.subheader('Labeled comments from topic')
+    st.dataframe(df)
+
+    st.markdown("""***""")
+    st.subheader('Thanks for using. Have a nice day')
+    image = Image.open('reddit_bye.png')
+    st.image(image, use_column_width=True)
 
     
