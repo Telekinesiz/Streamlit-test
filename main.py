@@ -239,6 +239,24 @@ if __name__ == '__main__':
         # Front_end
     st.success('Done!')
 
+    comments = comments_iterator(submission)
+    merged_df = pd.json_normalize(comments)
+    panda_clear_data(merged_df, column_for_classification)
+    df = panda_clear_data(merged_df, column_for_classification)
+    column_with_text = column_for_classification
+    sentiment_classifire(df, column_with_text)
+    #topic_categorizer(df, column_with_text, candidate_labels)
+
+    dt_object = datetime.fromtimestamp(int(topic_date))
+    topic_name_with_url = "["+topic_name+"](https://www.reddit.com/r/place/comments/"+submission_id+"/)"
+
+
+    graf_df_common = df.groupby(['Comment category','Comment label'], sort=False).size().reset_index(name='Count')
+    graf_df_label = df.groupby(['Comment label'], sort=False).size().reset_index(name='Count')
+    graf_df_category = df.groupby(['Comment category'], sort=False).size().reset_index(name='Count')
+    
+    
+    
 
     st.markdown("""***""")
     st.header(topic_name_with_url)
