@@ -9,4 +9,4 @@ gensim
 pyLDAvis
 plotly
 TensorFlow
-PyTorch
+Torch
