@@ -259,7 +259,7 @@ if __name__ == '__main__':
     #graf_df_label = df.groupby(['Comment label'], sort=False).size().reset_index(name='Count')
     #graf_df_category = df.groupby(['Comment category'], sort=False).size().reset_index(name='Count')
     
-     data_words = df[column_for_classification]
+    data_words = df[column_for_classification]
     id2word = corpora.Dictionary(data_words)
     corpus = []
     for text in data_words:
