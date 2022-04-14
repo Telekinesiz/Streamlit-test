@@ -23,6 +23,8 @@ import plotly.express as px
 import time
 
 nltk.download('stopwords')
+nltk.download('wordnet')
+
 
 #credentials*********************************************************
 reddit_credentials = praw.Reddit(
