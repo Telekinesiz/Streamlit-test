@@ -36,6 +36,154 @@ headers = {
     }
 
 
+def comments_iterator(submission):
+    comments = []
+    for top_level_comment in submission.comments:
+        if isinstance(top_level_comment, MoreComments):
+            continue
+
+        comments.append(
+            {'Original comment': top_level_comment.body,
+             'Comment': top_level_comment.body,
+             'Score': top_level_comment.score}
+        )
+    return comments
+
+# Filter only english
+def detect_en(text):
+    try:
+        return detect(text) == 'en'
+    except:
+        return False
+
+#lemmetize text
+def lemmatize_text(text):
+    w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
+    lemmatizer = nltk.stem.WordNetLemmatizer()
+    return [lemmatizer.lemmatize(w) for w in w_tokenizer.tokenize(text)]
+
+def panda_clear_data(merged_df,column_for_classification):
+    pd.options.mode.chained_assignment = None  # default='warn'
+    column_name = column_for_classification
+    # Remove emojis
+    merged_df.astype(str).apply(lambda x: x.str.encode('ascii', 'ignore').str.decode('ascii'))
+    # make lowercase
+    merged_df[column_name].to_string()
+    merged_df[column_name] = merged_df[column_name].str.lower()
+    # remove ascii and other special symbols
+    merged_df[column_name] = merged_df[column_name].str.replace('\n', '')
+    merged_df[column_name] = merged_df[column_name].str.replace('\t', '')
+    merged_df[column_name] = merged_df[column_name].str.replace('"', '')
+    merged_df[column_name] = merged_df[column_name].str.replace("'", "")
+    merged_df[column_name] = merged_df[column_name].str.replace("“", "")
+    merged_df[column_name] = merged_df[column_name].str.replace("”", "")
+    merged_df[column_name] = merged_df[column_name].str.replace("’", "")
+    merged_df[column_name] = merged_df[column_name].str.replace(' {2,}', '', regex=True)
+    merged_df[column_name] = merged_df[column_name].str.strip()
+    merged_df[column_name] = merged_df[column_name].str.replace('[{}]'.format(string.punctuation), '', regex=True)
+    #merged_df[column_name] = merged_df[column_name].str.contains(r'[^\x00-\x7F]', na=False)]
+    #merged_df[column_name] = merged_df[column_name].replace(r'[^\x00-\x7F]', '', na=False)
+    merged_df[column_name] = merged_df[column_name].replace(r'[^\w\s]|_', '', regex=True)
+    merged_df = merged_df[merged_df[column_name].apply(detect_en)]
+    # remove stop words
+    stop_words = stopwords.words('english')
+    merged_df[column_name] = merged_df[column_name].fillna("")
+    merged_df[column_name] = merged_df[column_name].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop_words)]))
+    # Remove URLs
+    merged_df[column_name] = merged_df[column_name].replace(r'http\S+', '', regex=True).replace(r'www\S+', '', regex=True)
+    # drop rows with no comments
+    merged_df[column_name] = merged_df[column_name].fillna("")
+    merged_df[column_name].replace('', np.nan, inplace=True)
+    merged_df.dropna(subset=[column_name], how='any', inplace=True)
+    # drop duplicates
+    merged_df.drop_duplicates(subset=[column_name])
+    #lemmatize text
+    merged_df[column_name] = merged_df[column_name].apply(lemmatize_text)
+    return (merged_df)
+
+def sentiment_classifire(df, column_with_text):
+    classifier = pipeline('sentiment-analysis')
+    cloumn_with_label = column_with_text + ' label'
+    column_with_probability = 'Label probability'
+    column_index = 1 + int(df.columns.get_loc(column_with_text))
+    #df[column_with_text] = df[column_with_text].apply
+    df.insert(column_index, column_with_probability, 'none')
+    df.insert(column_index, cloumn_with_label, 'none')
+    limitizer_for_test = 0
+    for ind in df.index:
+        # setting limit for length of input text in order to avoid errors. this model has limit for input
+        stemmed_text = df[column_with_text][ind]
+        if len(stemmed_text) >= 212:
+            stemmed_text = stemmed_text[0:211]
+        else:
+            pass
+
+        input_text = ' '.join(str(x) for x in stemmed_text)
+        print("row number: " + str(limitizer_for_test))
+        print('text: ' + input_text)
+        print("length of sentence: " + str(len(input_text)))
+        result = classifier(input_text)
+        label_dictionary = result[0]
+        print(label_dictionary)
+        label = label_dictionary['label']
+        probability = label_dictionary['score']
+        df[cloumn_with_label][ind] = label
+        df[column_with_probability][ind] = probability
+        #print('Label: '+ label)
+
+        limitizer_for_test  += 1
+        #if limitizer_for_test  >= 20:
+        #    break
+    return (df)
+
+def topic_categorizer(df, column_with_text, candidate_labels):
+    classifier = pipeline('zero-shot-classification')
+    column_with_label = column_with_text + ' category'
+    column_with_probability = 'Category probability'
+    column_index = 1 + int(df.columns.get_loc(column_with_text))
+    #df[column_with_text] = df[column_with_text].apply(literal_eval)
+    df.insert(column_index, column_with_probability, 'none')
+    df.insert(column_index, column_with_label, 'none')
+    limitizer_for_test = 0
+    # setting limit for length of input text in order to avoid errors. this model has limit for input
+    for ind in df.index:
+
+        stemmed_text = df[column_with_text][ind]
+        if len(stemmed_text) >= 212:
+            stemmed_text = stemmed_text[0:211]
+        else:
+            pass
+
+        input_text = ' '.join(str(x) for x in stemmed_text)
+        print("row number: " + str(limitizer_for_test))
+        print('text: ' + input_text)
+        print("length of sentence: " + str(len(input_text)))
+        result = classifier(input_text, candidate_labels)
+
+        scores = result['scores']
+        labels = result['labels']
+
+        #finding largest score
+        largest_score = scores[0]
+        for number in scores:
+            if number > largest_score:
+                largest_score = number
+
+        #finding largest score index and label by undex
+        for index, score in enumerate(scores):
+            if score == largest_score:
+                lab_index = index
+
+        label = labels[lab_index]
+        df[column_with_label][ind] = label
+        df[column_with_probability][ind] = largest_score
+        #print('Label: '+ label)
+        limitizer_for_test  += 1
+        #if limitizer_for_test  >= 20:
+        #    break
+    return (df)
+
+
 # main script
 if __name__ == '__main__':
     #Front_end. This paert placed here in order to show something to user while script working
