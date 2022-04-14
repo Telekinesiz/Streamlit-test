@@ -279,7 +279,9 @@ if __name__ == '__main__':
 
     vis = pyLDAvis.gensim_models.prepare(lda_model, corpus, id2word, mds="mmds", R=30)
     #vis
-    pyLDAvis.
+    pyLDAvis.save_html(vis, 'ida.html')
+    with open('./ida.html', 'r') as f:
+        html_string = f.read()
     
 
     st.markdown("""***""")
