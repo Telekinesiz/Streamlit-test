@@ -200,3 +200,52 @@ if __name__ == '__main__':
     with st.spinner('Wait for it...'):
         time.sleep(600)
 
+#backend
+    # for classification
+    column_for_classification = 'Comment'
+    candidate_labels = ["war", "science", "politics", "economy", "amusement", "hobby", 'criminal', 'culture', 'meme',
+                        'sport']
+
+    submission_id = st.sidebar.text_input("reddit topic ID", value="tu8l5v")
+    reddit = reddit_credentials
+    submission = reddit.submission(submission_id)
+
+    print(submission)
+    award_price = 0
+    for award in submission.all_awardings:
+        coin_price = award["coin_price"]
+        count = award["count"]
+        award_price += count*coin_price
+    print(award_price)
+
+    topic_date = submission.created_utc
+    topic_name = submission.title
+    topic_text = submission.selftext
+    topic_score = submission.score
+    topic_ratio = submission.upvote_ratio
+    Page_url = 'https: // www.reddit.com' + str(submission.permalink)
+    json_post_url = 'https://www.reddit.com' + str(submission.permalink) + '.json'
+
+    # will get image or link
+    try:
+        link_or_image = requests.get(json_post_url, headers=headers).json()
+        link_or_image_2 = link_or_image[0]['data']['children'][0]['data']
+        link_or_image_3 = link_or_image_2['url_overridden_by_dest']
+    except:
+        link_or_image_3 = "There is no avialable link or image"
+        pass
+        
+        
+        # Front_end
+    st.success('Done!')
+
+
+    st.markdown("""***""")
+    st.header(topic_name_with_url)
+    st.markdown("""Created at: """ + str(dt_object))
+
+    image = st.image(link_or_image_3)
+    st.markdown(link_or_image_3)
+    st.markdown(topic_text)
+
+    
