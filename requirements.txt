@@ -8,3 +8,5 @@ requests
 gensim
 pyLDAvis
 plotly
+TensorFlow
+PyTorch
